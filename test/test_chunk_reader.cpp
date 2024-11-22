@@ -4,6 +4,7 @@
 #include <mpi.h>
 #include <chrono>
 #include <thread>
+#include <filesystem>
 
 
 TEST_CASE("ReadFakeData","[reader]") {
@@ -37,6 +38,8 @@ TEST_CASE("InitBasePath","[chunk_reader]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
+  if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
+
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao); //test these numbers
 
   REQUIRE(c.chunk_indices()[0]==0);
@@ -51,6 +54,7 @@ TEST_CASE("ReadSomething","[chunk_reader]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
+  if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao,true); //test these numbers
 
   Eigen::VectorXd data(c.element_size());

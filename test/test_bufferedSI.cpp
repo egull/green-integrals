@@ -4,6 +4,7 @@
 #include "green/integrals/buffered_reader/buffer.hpp"
 #include "green/integrals/buffered_reader/chunk_reader.hpp"
 #include <mpi.h>
+#include <filesystem>
 
 TEST_CASE("Init","[ReadingSI]") {
 
@@ -12,6 +13,8 @@ TEST_CASE("Init","[ReadingSI]") {
   int nao=26;
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
+
+  if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
 
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao, true); //test these numbers
   buffer b(c.element_size(), number_of_keys, number_of_keys, &c);
@@ -27,6 +30,7 @@ TEST_CASE("ReadAllIntsConsecutively","[ReadingSI]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
+  if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao); //test these numbers
   buffer b(c.element_size(), number_of_keys, number_of_keys, &c, true);
 
@@ -48,6 +52,7 @@ TEST_CASE("ReadAllIntsSmallBuffer","[ReadingSI]") {
   int number_of_keys=chunks_per_file*total_files;
   int n_buffered_elem=100;
 
+  if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao,true); //test these numbers
   buffer b(c.element_size(), number_of_keys, n_buffered_elem, &c);
 
@@ -65,6 +70,7 @@ TEST_CASE("ReadAllIntsConsecutivelyLargeStride","[ReadingSI]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
+  if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao,true); //test these numbers
   buffer b(c.element_size(), number_of_keys, number_of_keys, &c, false, false);
 
