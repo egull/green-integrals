@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include "buffer.hpp"
-#include "chunk_reader.hpp"
+#include "green/integrals/buffered_reader/buffer.hpp"
+#include "green/integrals/buffered_reader/chunk_reader.hpp"
 #include <mpi.h>
 #include <openssl/sha.h>
 #include <iomanip>
@@ -16,7 +16,7 @@ TEST_CASE("HashOfKeys","[ReadingSI]") {
   unsigned char digest[SHA_DIGEST_LENGTH];
 
 
-  chunk_reader c(HDF5_DATA_DIR, number_of_keys, naux, nao); //test these numbers
+  chunk_reader c(TEST_PATH, number_of_keys, naux, nao); //test these numbers
   buffer b(c.element_size(), number_of_keys, 100, &c, false, false);
   if(b.shmem_rank()==0){
   for(int i=0;i<5;++i){

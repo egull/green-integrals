@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
-#include "buffer.hpp"
-#include "chunk_reader.hpp"
+#include "green/integrals/buffered_reader/buffer.hpp"
+#include "green/integrals/buffered_reader/chunk_reader.hpp"
 #include <mpi.h>
 
 TEST_CASE("Init","[ReadingSI]") {
@@ -13,7 +13,7 @@ TEST_CASE("Init","[ReadingSI]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
-  chunk_reader c(HDF5_DATA_DIR, number_of_keys, naux, nao, true); //test these numbers
+  chunk_reader c(TEST_PATH, number_of_keys, naux, nao, true); //test these numbers
   buffer b(c.element_size(), number_of_keys, number_of_keys, &c);
 
   const double* val=b.access_element(0);
@@ -27,7 +27,7 @@ TEST_CASE("ReadAllIntsConsecutively","[ReadingSI]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
-  chunk_reader c(HDF5_DATA_DIR, number_of_keys, naux, nao); //test these numbers
+  chunk_reader c(TEST_PATH, number_of_keys, naux, nao); //test these numbers
   buffer b(c.element_size(), number_of_keys, number_of_keys, &c, true);
 
   for(int i=b.shmem_rank();i<chunks_per_file*total_files;i+=b.shmem_size()){
@@ -48,7 +48,7 @@ TEST_CASE("ReadAllIntsSmallBuffer","[ReadingSI]") {
   int number_of_keys=chunks_per_file*total_files;
   int n_buffered_elem=100;
 
-  chunk_reader c(HDF5_DATA_DIR, number_of_keys, naux, nao,true); //test these numbers
+  chunk_reader c(TEST_PATH, number_of_keys, naux, nao,true); //test these numbers
   buffer b(c.element_size(), number_of_keys, n_buffered_elem, &c);
 
   for(int i=b.shmem_rank();i<chunks_per_file*total_files;i+=b.shmem_size()){
@@ -65,7 +65,7 @@ TEST_CASE("ReadAllIntsConsecutivelyLargeStride","[ReadingSI]") {
   int naux=200;
   int number_of_keys=chunks_per_file*total_files;
 
-  chunk_reader c(HDF5_DATA_DIR, number_of_keys, naux, nao,true); //test these numbers
+  chunk_reader c(TEST_PATH, number_of_keys, naux, nao,true); //test these numbers
   buffer b(c.element_size(), number_of_keys, number_of_keys, &c, false, false);
 
   int stride=number_of_keys/b.shmem_size();

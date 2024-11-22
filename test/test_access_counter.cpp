@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "access_counter.hpp"
+#include "green/integrals/buffered_reader/access_counter.hpp"
 #include <mpi.h>
 #include <chrono>
 #include <thread>

@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include "shared_memory_region.hpp"
+#include "green/integrals/buffered_reader/shared_memory_region.hpp"
 #include <mpi.h>
 #include <chrono>
 #include <thread>

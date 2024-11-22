@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include "buffer.hpp"
+#include "green/integrals/buffered_reader/buffer.hpp"
 #include <mpi.h>
 
 TEST_CASE("Init","[buffer]") {
