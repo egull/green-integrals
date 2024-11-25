@@ -10,13 +10,19 @@
 #include <green/utils/mpi_shared.h>
 #include <green/utils/mpi_utils.h>
 
-#include <green/mbpt/except.h>
-
-//#include "df_legacy_reader.h"
 #include "df_buffered_reader.h"
+#include "common_defs.h"
 
-namespace green::mbpt {
-  enum integral_symmetry_type_e { direct, conjugated, transposed };
+namespace green::integrals{
+
+  enum integral_symmetry_type_e {
+    direct, conjugated, transposed
+  };
+
+  enum integral_reading_type {
+    chunks, as_a_whole
+  };
+
   /**
    * @brief Integral class to parse Density fitted 3-center integrals, handles reading given by the path argument
    */
@@ -205,6 +211,6 @@ namespace green::mbpt {
     std::string               _base_path;
   };
 
-}  // namespace green::mbpt
+}  // namespace green::integrals
 
 #endif  // GF2_DFINTEGRAL_H

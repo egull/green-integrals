@@ -10,12 +10,13 @@
 #include <green/utils/mpi_shared.h>
 #include <green/utils/mpi_utils.h>
 
-#include <green/mbpt/except.h>
-
 #include"buffered_reader/chunk_reader.hpp"
 #include"buffered_reader/buffer.hpp"
+#include"except.h"
+#include"common_defs.h"
 
-namespace green::mbpt {
+namespace green::integrals {
+
   class df_buffered_reader{
   /**
    * @brief Integral class to read 3-central integrals using buffered reading
@@ -39,10 +40,10 @@ namespace green::mbpt {
       if(ar.has_attribute("__green_version__")) {
         std::string int_version = ar.get_attribute<std::string>("__green_version__");
         if (int_version.rfind(INPUT_VERSION, 0) != 0) {
-          throw mbpt_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
+          throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
         }
       } else {
-        throw mbpt_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
+        throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
       }
       ar.close();
 
