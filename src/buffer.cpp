@@ -8,7 +8,6 @@ int buffer::n_buffer_elem_heuristics(double ratio, int element_size, int total_n
     unsigned long long pages = sysconf(_SC_PHYS_PAGES);
     unsigned long long page_size = sysconf(_SC_PAGE_SIZE);
     unsigned long long total_memory=pages*page_size;
-    //if(verbose_) std::cout<<"total memory size: "<<total_memory/(1024.*1024.*1024.)<<" GB"<<std::endl;
 
     //figure out how many elements we could fit total
     unsigned long long total_elements=total_memory/element_size;
@@ -18,7 +17,17 @@ int buffer::n_buffer_elem_heuristics(double ratio, int element_size, int total_n
 
 
     if(proposed_nelem >= total_num_elem) proposed_nelem=total_num_elem;
-    //if(verbose_ && (proposed_nelem <100)) std::cerr<<"WARNING: ONLY "<<proposed_nelem<<" (<100) buffer elements fit to memory."<<std::endl; 
+
+    int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if(rank==0){
+      std::cout<<"******************Integral Buffer allocation**********************"<<std::endl;
+      std::cout<<"* total memory size: "<<total_memory/(1024.*1024.*1024.)<<" GB"<<std::endl;
+      std::cout<<"* individual element size: "<<element_size/(1024.*1024.)<<" MB"<<std::endl;
+      std::cout<<"* proposed number of elements: "<<proposed_nelem<<" (target mem ratio: "<<ratio<<")"<<std::endl;
+      std::cout<<"* proposed memory usage: "<<proposed_nelem*element_size/(1024.*1024.*1024.)<<" GB"<<std::endl;
+      std::cout<<"******************************************************************"<<std::endl;
+    if(total_num_elem >= 100 && proposed_nelem <100) std::cerr<<"WARNING: ONLY "<<proposed_nelem<<" (<100) buffer elements fit to memory."<<std::endl; 
+    }
 
     return proposed_nelem;
 }

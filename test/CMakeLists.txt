@@ -18,7 +18,8 @@ test_age_out_buffer.cpp		test_main.cpp
 test_buffer.cpp			test_mpi.cpp
 test_bufferedSI.cpp		test_shared_memory_region.cpp
 )
-target_compile_definitions(integrals_test PRIVATE TEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data")
+target_compile_definitions(integrals_test PRIVATE TEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../../../../hdf5")
+
 target_link_libraries(integrals_test
         PRIVATE
         Catch2::Catch2WithMain
