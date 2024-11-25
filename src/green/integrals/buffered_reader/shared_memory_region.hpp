@@ -15,14 +15,18 @@ public:
     int err=MPI_Win_allocate_shared(shmem_rank==0?region_size* sizeof(T):0, sizeof(T), MPI_INFO_NULL, shmem_comm, &buffer_status_alloc_, &window_);
     if(err !=MPI_SUCCESS){
       std::cerr<<"memory allocation error on shmem rank: "<<shmem_rank<<std::endl;
-      MPI_Abort(MPI_COMM_WORLD, 1);
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
     if(validate_shmem) validate_shmem_model();
     //get a local pointer to shared memory buffer
     {
       MPI_Aint rss2;
       int soT2;
-      MPI_Win_shared_query(window_, 0, &rss2, &soT2, &buffer_status_);
+      err=MPI_Win_shared_query(window_, 0, &rss2, &soT2, &buffer_status_);
+      if(err!=MPI_SUCCESS){
+        std::cerr<<"memory window query error on shmem rank: "<<shmem_rank<<std::endl;
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+      }
       if(rss2!=region_size*sizeof(T)) throw std::runtime_error("shared window error: nk2 should be number of keys");
       if(soT2!=sizeof(T)) throw std::runtime_error("shared window error: soi2 should be sizeof(int)");
       double size_in_gb=region_size*sizeof(T)/1014./1024./1024.;

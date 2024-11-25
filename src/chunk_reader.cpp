@@ -31,6 +31,14 @@ void chunk_reader::parse_meta(){
   H5Fclose(file_id);
 }
 void chunk_reader::read_key(int key, double *buffer){
+  {
+    //debug: the following will access the first and last element of the buffer to make sure we can write.
+    buffer[0]=0.;
+    buffer[element_size_-1]=0.;
+    //memset the entire buffer. Make sure we can write everywhere.
+    memset(buffer, 'A', element_size_*sizeof(double));
+  }
+
   std::string filepath;
   unsigned long long offset;
   int chunk_name;
