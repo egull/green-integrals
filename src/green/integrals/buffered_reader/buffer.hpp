@@ -66,7 +66,7 @@ public:
   std::size_t number_of_keys() const{return number_of_keys_;}
 
   //memory heuristics for figuring out how many elements we should allocate, as function of total memory size
-  static int n_buffer_elem_heuristics(double ratio, int element_size_in_bytes, int total_num_elem);
+  static int n_buffer_elem_heuristics(double ratio, std::size_t element_size_in_bytes, std::size_t total_num_elem);
 
   int element_status(int key) const{ return element_status_[key];}
 

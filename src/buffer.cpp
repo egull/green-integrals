@@ -3,17 +3,17 @@
 #include <unistd.h>
 
 
-int buffer::n_buffer_elem_heuristics(double ratio, int element_size, int total_num_elem) {
+int buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size, std::size_t total_num_elem) {
     //figure out how much memory is available on the machine
-    unsigned long long pages = sysconf(_SC_PHYS_PAGES);
-    unsigned long long page_size = sysconf(_SC_PAGE_SIZE);
-    unsigned long long total_memory=pages*page_size;
+    std::size_t pages = sysconf(_SC_PHYS_PAGES);
+    std::size_t page_size = sysconf(_SC_PAGE_SIZE);
+    std::size_t total_memory=pages*page_size;
 
     //figure out how many elements we could fit total
-    unsigned long long total_elements=total_memory/element_size;
+    std::size_t total_elements=total_memory/element_size;
 
     //modify by proportion of memory, round and return
-    int proposed_nelem=(int)(total_elements*ratio);
+    std::size_t proposed_nelem=(std::size_t)(total_elements*ratio);
 
 
     if(proposed_nelem >= total_num_elem) proposed_nelem=total_num_elem;

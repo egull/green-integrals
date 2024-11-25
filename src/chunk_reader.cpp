@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include <chrono>
+#include <mpi.h>
 
 void chunk_reader::parse_meta(){
   std::string filename=basepath_+"/meta.h5";
@@ -90,33 +91,30 @@ void chunk_reader::read_key_at_offset(const std::string &filepath, int chunk_nam
 
     file_id = H5Fopen(filepath.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (file_id < 0) {
-      throw std::runtime_error("Error opening file: "+filepath);
+      std::cerr<<"Error opening file: "<<filepath<<std::endl;
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
     std::stringstream hdf5_path; hdf5_path<<"/"<<chunk_name;   
     dataset_id = H5Dopen(file_id, hdf5_path.str().c_str(), H5P_DEFAULT);
     if (dataset_id < 0) {
-      throw std::runtime_error("Error opening dataset: "+hdf5_path.str()+" for file: "+filepath);
+      std::cerr<<"Error opening dataset: "<<hdf5_path.str()<<" for file: "<<filepath<<std::endl;
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
     dataspace_id = H5Dget_space(dataset_id);
 
     herr_t status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, start, NULL, count, NULL);
     if (status < 0) {
-      throw std::runtime_error("Error selecting hyperslab: "+hdf5_path.str()+" for file: "+filepath);
+      std::cerr<<"Error selecting hyperslab: "<<hdf5_path.str()<<" for file: "<<filepath<<std::endl;
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
     memspace_id = H5Screate_simple(rank, count, NULL);
-    { //we have an unstable network file system. Attempt to read this multiple times if it fails
-      int nattempt=0;
-      do{
-        status = H5Dread(dataset_id, H5T_NATIVE_DOUBLE, memspace_id, dataspace_id, H5P_DEFAULT, buffer);
-        if (status < 0) {
-          std::cerr<<"Error reading data: "+hdf5_path.str()+" for file: "+filepath<<" attempt: "<<nattempt;
-          if(nattempt>=3) throw std::runtime_error("aborting after repeated file read error");
-        }
-        nattempt++;
-      }while(status>0);
+    status = H5Dread(dataset_id, H5T_NATIVE_DOUBLE, memspace_id, dataspace_id, H5P_DEFAULT, buffer);
+    if (status < 0) {
+      std::cerr<<"Error reading data: "+hdf5_path.str()+" for file: "+filepath<<std::endl;
+      MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
     H5Sclose(memspace_id);
     H5Sclose(dataspace_id);
