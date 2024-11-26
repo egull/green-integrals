@@ -115,6 +115,7 @@ const double *buffer::access_element(int key){
       element_status_.release_exclusive_lock();
       //should sleep for 1 millisecond to wait for data to arrive
       std::this_thread::sleep_for(std::chrono::milliseconds(1)); //go to sleep for one millisecond, then check again
+      //std::cout<<"rank: "<<shmem_rank()<<" buffer access wait."<<std::endl;
       element_status_.acquire_exclusive_lock();
     }
   }
@@ -143,6 +144,9 @@ const double *buffer::access_element(int key){
 
   //find key of oldest unused buffer 
   int buffer=aob_.oldest_entry();
+  //age out the oldest buffer and move it to the top
+  aob_.replace_oldest_entry(buffer);
+
   int old_key=buffer_key_[buffer];
   {
     //set data for old key to unavailable
@@ -151,7 +155,15 @@ const double *buffer::access_element(int key){
       element_status_[old_key]=status_elem_unavailable;
     }
     //sanity check
-    if(buffer_access_counter_[buffer]!=0) throw std::logic_error("freeing buffer still in use");
+    while(buffer_access_counter_[buffer]!=0){
+      //throw std::logic_error("freeing buffer still in use");
+      element_status_.release_exclusive_lock();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1)); //go to sleep for one millisecond, then check again
+      std::cout<<"rank: "<<shmem_rank()<<" wait for busy buffer."<<std::endl;
+      std::cout<<"WARNING: this is a sign that there are many concurrent reads competing for few buffers."<<std::endl;
+      std::cout<<"WARNING: HINT: increase number of buffered elements or reduce concurrent tasks"<<std::endl;
+      element_status_.acquire_exclusive_lock();
+    }
     
     //repurpose buffer for current key
     element_buffer_index_[key]=buffer;
@@ -160,8 +172,6 @@ const double *buffer::access_element(int key){
     buffer_access_counter_[buffer]++;
     buffer_access_counter_.release_exclusive_lock();
 
-    //age out the oldest buffer and move it to the top
-    aob_.replace_oldest_entry(buffer);
 
     buffer_key_.acquire_exclusive_lock();
     buffer_key_[buffer]=key;
@@ -175,11 +185,9 @@ const double *buffer::access_element(int key){
   double *read_buffer= &(buffer_data_[buffer*element_size_]);
   if(single_thread_read_)
     single_thread_readlock_.acquire_exclusive_lock();
-  //std::cout<<"rank: "<<shmem_rank()<<" reading key: "<<key<<" into buffer: "<<buffer<<std::endl;
   reader_ptr_->read_key(key, read_buffer);
   if(single_thread_read_)
     single_thread_readlock_.release_exclusive_lock();
-  //std::cout<<"rank: "<<shmem_rank()<<" read successful."<<std::endl;
 
   // lock, change status to available, and release lock 
   element_status_.acquire_exclusive_lock();
