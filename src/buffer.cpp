@@ -3,14 +3,14 @@
 #include <unistd.h>
 
 
-int buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size, std::size_t total_num_elem) {
+int buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size_in_bytes, std::size_t total_num_elem) {
     //figure out how much memory is available on the machine
     std::size_t pages = sysconf(_SC_PHYS_PAGES);
     std::size_t page_size = sysconf(_SC_PAGE_SIZE);
     std::size_t total_memory=pages*page_size;
 
     //figure out how many elements we could fit total
-    std::size_t total_elements=total_memory/element_size;
+    std::size_t total_elements=total_memory/element_size_in_bytes;
 
     //modify by proportion of memory, round and return
     std::size_t proposed_nelem=(std::size_t)(total_elements*ratio);
@@ -22,9 +22,9 @@ int buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size, std
     if(rank==0){
       std::cout<<"******************Integral Buffer allocation**********************"<<std::endl;
       std::cout<<"* total memory size: "<<total_memory/(1024.*1024.*1024.)<<" GB"<<std::endl;
-      std::cout<<"* individual element size: "<<element_size/(1024.*1024.)<<" MB"<<std::endl;
+      std::cout<<"* individual element size: "<<element_size_in_bytes/(1024.*1024.)<<" MB"<<std::endl;
       std::cout<<"* proposed number of elements: "<<proposed_nelem<<" (target mem ratio: "<<ratio<<")"<<std::endl;
-      std::cout<<"* proposed memory usage: "<<proposed_nelem*element_size/(1024.*1024.*1024.)<<" GB"<<std::endl;
+      std::cout<<"* proposed memory usage: "<<proposed_nelem*element_size_in_bytes/(1024.*1024.*1024.)<<" GB"<<std::endl;
       std::cout<<"******************************************************************"<<std::endl;
     if(total_num_elem >= 100 && proposed_nelem <100) std::cerr<<"WARNING: ONLY "<<proposed_nelem<<" (<100) buffer elements fit to memory."<<std::endl; 
     }
@@ -78,9 +78,9 @@ void buffer::setup_mpi_shmem(){
   single_thread_readlock_.setup_shmem_region(shmem_comm_, 1);
 
   //finally the allocation of the buffer
-  buffer_data_.resize(number_of_buffered_elements_);
-  for(int i=0;i<number_of_buffered_elements_;++i)
-    buffer_data_[i].setup_shmem_region(shmem_comm_,(unsigned long long) element_size_);
+  //std::cout<<"allocating large mem region of size: "<<number_of_buffered_elements_*element_size_/(1024./1024.)<<" kB"<<std::endl;
+  buffer_data_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_*element_size_);
+  //std::cout<<"moving on"<<std::endl;
 
   MPI_Barrier(shmem_comm_);
 }
@@ -131,7 +131,7 @@ const double *buffer::access_element(int key){
 
     //release status lock, return buffer index
     element_status_.release_exclusive_lock();
-    return &(buffer_data_[buffer][0]);
+    return &(buffer_data_[buffer*element_size_]);
   }
 
   //otherwise status is unavailable and we need to read from file system.
@@ -172,13 +172,14 @@ const double *buffer::access_element(int key){
   element_status_.release_exclusive_lock();
 
   //go and read the data
-  double *read_buffer= &(buffer_data_[buffer][0]);
+  double *read_buffer= &(buffer_data_[buffer*element_size_]);
   if(single_thread_read_)
     single_thread_readlock_.acquire_exclusive_lock();
   //std::cout<<"rank: "<<shmem_rank()<<" reading key: "<<key<<" into buffer: "<<buffer<<std::endl;
   reader_ptr_->read_key(key, read_buffer);
   if(single_thread_read_)
     single_thread_readlock_.release_exclusive_lock();
+  //std::cout<<"rank: "<<shmem_rank()<<" read successful."<<std::endl;
 
   // lock, change status to available, and release lock 
   element_status_.acquire_exclusive_lock();

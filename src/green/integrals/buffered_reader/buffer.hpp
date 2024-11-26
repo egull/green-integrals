@@ -21,7 +21,7 @@ enum{
 
 class buffer{
 public:
-  buffer(int element_size_in_doubles, int number_of_keys, int number_of_buffered_elements, reader *reader_ptr, bool verbose=false, bool single_thread_read=false):
+  buffer(std::size_t element_size_in_doubles, int number_of_keys, int number_of_buffered_elements, reader *reader_ptr, bool verbose=false, bool single_thread_read=false):
     element_size_(element_size_in_doubles),
     number_of_keys_(number_of_keys),
     number_of_buffered_elements_(number_of_buffered_elements),
@@ -105,7 +105,7 @@ private:
   //this is where we store the buffer for a particular key
   shared_memory_region<int> element_buffer_index_;
   //this is where we keep the actual data
-  std::vector<shared_memory_region<double>> buffer_data_;
+  shared_memory_region<double> buffer_data_;
 
   //in case we only allow a single thread to read at once
   shared_memory_region<bool> single_thread_readlock_;
