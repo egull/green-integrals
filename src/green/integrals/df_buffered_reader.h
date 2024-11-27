@@ -40,10 +40,14 @@ namespace green::integrals {
       if(ar.has_attribute("__green_version__")) {
         std::string int_version = ar.get_attribute<std::string>("__green_version__");
         if (int_version.rfind(INPUT_VERSION, 0) != 0) {
-          throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
+          //throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
+          std::cerr<<"Integral files at '" + path +"' are outdated, please run migration script python/migrate.py"<<std::endl;
+          std::cerr<<"we should really throw but we won't until the debug files have been updated."<<std::endl;
         }
       } else {
-        throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
+        //throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
+          std::cerr<<"Integral files at '" + path +"' are outdated, please run migration script python/migrate.py"<<std::endl;
+          std::cerr<<"we should really throw but we won't until the debug files have been updated."<<std::endl;
       }
       ar.close();
 

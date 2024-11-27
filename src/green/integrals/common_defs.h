@@ -33,6 +33,15 @@ namespace green::integrals{
 
   static const std::string INPUT_VERSION = "0.2.4";
 
+  enum integral_symmetry_type_e {
+    direct, conjugated, transposed
+  };
+
+  enum integral_reading_type {
+    chunks, as_a_whole
+  };
+
+
   // Matrix types
   template <typename prec>
   using MatrixX   = Eigen::Matrix<prec, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
@@ -150,7 +159,7 @@ namespace green::integrals{
     , GREEN_CUSTOM_KERNEL_ENUM_3
 #endif
   };
-
+/*
   inline void define_parameters(params::params& p) {
     p.define<std::string>("dfintegral_hf_file", "Path to Hartree-Fock integrals", "df_hf_int");
     p.define<std::string>("dfintegral_file", "Path to integrals for high orfer theories", "df_int");
@@ -177,6 +186,6 @@ namespace green::integrals{
 #ifdef GREEN_CUSTOM_KERNEL_HEADER_3
     GREEN_CUSTOM_KERNEL_NS_3::custom_kernel_parameters(p);
 #endif
-  }
+  }*/
 }  // namespace green::integrals
 #endif  // MBPT_COMMON_DEFS_H
