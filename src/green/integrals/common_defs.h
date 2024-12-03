@@ -27,20 +27,9 @@
 
 #include <Eigen/Dense>
 
-//#include "custom_kernels.h"
+#include "common_defs_e.h"
 
 namespace green::integrals{
-
-  static const std::string INPUT_VERSION = "0.2.4";
-
-  enum integral_symmetry_type_e {
-    direct, conjugated, transposed
-  };
-
-  enum integral_reading_type {
-    chunks, as_a_whole
-  };
-
 
   // Matrix types
   template <typename prec>
