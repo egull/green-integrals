@@ -33,7 +33,7 @@ namespace green::integrals{
     df_integral_t(const std::string& path, int nao, int NQ, const bz_utils_t& bz_utils) :
       _base_path(path),
       _number_of_keys(bz_utils.symmetry().num_kpair_stored()),
-      _vij_Q_buffer(path, nao, NQ, _number_of_keys, true), //initialize buffered reader
+      _vij_Q_buffer(path, nao, NQ, _number_of_keys, 0.5), //initialize buffered reader
         _k0(-1), _NQ(NQ), _bz_utils(bz_utils) {
     }
 

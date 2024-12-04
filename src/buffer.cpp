@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 
-int buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size_in_bytes, std::size_t total_num_elem) {
+std::size_t buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size_in_bytes, std::size_t total_num_elem) {
     //figure out how much memory is available on the machine
     std::size_t pages = sysconf(_SC_PHYS_PAGES);
     std::size_t page_size = sysconf(_SC_PAGE_SIZE);
