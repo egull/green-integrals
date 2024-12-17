@@ -186,6 +186,10 @@ namespace green::mbpt {
     void reset() {
       _vij_Q_buffer.reset();
     }
+    std::size_t shape() const{
+      auto shape = _vij_Q_buffer.shape();
+      return shape[0]*shape[1]*shape[2]*shape[3]; //nkeys*nQ*nao*nao
+    }
 
   private:
     int                       _number_of_keys;
