@@ -33,7 +33,7 @@ TEST_CASE("ReadAllIntsConsecutively","[ReadingSI]") {
 //std::cout<<"Reading Si"<<std::endl;
   if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao); //test these numbers
-  buffer b(c.element_size(), number_of_keys, 1000, &c, true);
+  buffer b(c.element_size(), number_of_keys, 1000, &c, 2);
 
   for(int i=b.shmem_rank();i<number_of_keys;i+=b.shmem_size()){
     if(i>=number_of_keys) break;
@@ -73,7 +73,7 @@ TEST_CASE("ReadAllIntsConsecutivelyLargeStride","[ReadingSI]") {
 
   if(!std::filesystem::exists(TEST_PATH)){ std::cerr<<"hdf5 data not found. aborting test"<<std::endl; return;}
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao,true); //test these numbers
-  buffer b(c.element_size(), number_of_keys, number_of_keys, &c, false, false);
+  buffer b(c.element_size(), number_of_keys, number_of_keys, &c, 0, false);
 
   int stride=number_of_keys/b.shmem_size();
   int start=number_of_keys/b.shmem_size()*b.shmem_rank();

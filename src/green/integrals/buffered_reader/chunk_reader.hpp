@@ -7,7 +7,7 @@
 
 class chunk_reader:public reader{
   public:
-    chunk_reader(bool verbose=false):
+    chunk_reader(int verbose=0):
      elapsed_(0){
       validate_threadsafety();
       ctr_=0;
@@ -23,7 +23,7 @@ class chunk_reader:public reader{
       parse_meta();
     }
     ~chunk_reader(){
-      if(verbose_){
+      if(verbose_>1){
         double av_read_time=elapsed_.count()/ctr_;
         double read_size=element_size_*sizeof(double);
         std::cout<<"total reads: "<<ctr_<<" effective read rate: "<<read_size/av_read_time/1024./1024.<<" MB/s"<<std::endl;
@@ -45,5 +45,5 @@ class chunk_reader:public reader{
 
     std::chrono::duration<double> elapsed_;
     std::size_t ctr_;
-    bool verbose_;
+    int verbose_;
 };
