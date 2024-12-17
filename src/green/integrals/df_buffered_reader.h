@@ -25,17 +25,18 @@ namespace green::integrals {
    * @param NQ: number of auxiliary orbitals
    * @param number_of_keys: total number of elements in hdf5 files (each of size nao**2*NQ
    * @param buffer_mem_ratio: parameter for heuristics of how much of total physical memory should be allocated for a buffer
+   * @param verbose: verbosity of output - should match with the verbosity of all other components in green-mbpt
    */
 
     const std::string _chunk_basename    = "VQ";
 
   public:
-    df_buffered_reader(const std::string& path, int nao, int NQ, int number_of_keys, double buffer_mem_ratio=0.5) :
+    df_buffered_reader(const std::string& path, int nao, int NQ, int number_of_keys, double buffer_mem_ratio=0.5, int verbose) :
         _base_path(path), _k0(-1), _NQ(NQ), _nao(nao),
         _number_of_keys(number_of_keys),
         _number_of_buffered_elements(buffer::n_buffer_elem_heuristics(buffer_mem_ratio, nao*nao*NQ*sizeof(std::complex<double>), number_of_keys)),
         _reader(path, number_of_keys, NQ, nao),
-        _buffer(nao*nao*NQ*2, number_of_keys, _number_of_buffered_elements, &_reader, true, false){ //'*2' for double storage inside buffer. also 'true' for single thread read which otherwise causes problems if multiple instances want to read.
+        _buffer(nao*nao*NQ*2, number_of_keys, _number_of_buffered_elements, &_reader, verbose, false){ //'*2' for double storage inside buffer. also 'true' for single thread read which otherwise causes problems if multiple instances want to read.
       h5pp::archive ar(path + "/meta.h5");
       if(ar.has_attribute("__green_version__")) {
         std::string int_version = ar.get_attribute<std::string>("__green_version__");

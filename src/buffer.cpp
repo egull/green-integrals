@@ -44,18 +44,18 @@ void buffer::setup_mpi_shmem(){
   int global_size; MPI_Comm_size(MPI_COMM_WORLD, &global_size);
   for(int i=0; i<global_size;++i){
     MPI_Barrier(MPI_COMM_WORLD);
-    if(i==global_rank && verbose_)
+    if(i==global_rank && verbose_>1)
       std::cout<<"global rank "<<i<<" is local shmem rank: "<<shmem_rank_<<" with shmem size: "<<shmem_size_<<std::endl;
   }
   MPI_Barrier(MPI_COMM_WORLD);
   
   //create a shared memory status for the elements
-  element_status_.setup_shmem_region(shmem_comm_, number_of_keys_, true); //also validate shmem model
+  element_status_.setup_shmem_region(shmem_comm_, number_of_keys_, true, verbose_); //also validate shmem model
   //initialize status on shmem rank 0
   if(shmem_rank_==0) for(int i=0;i<number_of_keys_;++i) element_status_[i]=status_elem_unavailable;
 
   //create a shared memory array counting how many threads use this buffer
-  buffer_access_counter_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_);
+  buffer_access_counter_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_, false, verbose_);
   //initialize status on shmem rank 0
   if(shmem_rank_==0) for(int i=0;i<number_of_buffered_elements_;++i) buffer_access_counter_[i]=0;
 
@@ -65,21 +65,21 @@ void buffer::setup_mpi_shmem(){
   //if(shmem_rank_==0) for(int i=0;i<number_of_buffered_elements_;++i) buffer_last_access_[i]=buffer_never_accessed;
 
   //create a shared memory access array pointing from buffer to element
-  buffer_key_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_);
+  buffer_key_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_, false, verbose_);
   //initialize on shmem rank 0
   if(shmem_rank_==0) for(int i=0;i<number_of_buffered_elements_;++i) buffer_key_[i]=key_index_nowhere;
 
   //create a shared memory array pointing from element to buffer
-  element_buffer_index_.setup_shmem_region(shmem_comm_, number_of_keys_);
+  element_buffer_index_.setup_shmem_region(shmem_comm_, number_of_keys_, false, verbose_);
   //initialize on shmem rank 0
   if(shmem_rank_==0) for(int i=0;i<number_of_keys_;++i) element_buffer_index_[i]=buffer_index_nowhere;
 
   //create shared memory window that we'll use for a simple lock in case we only allow a single thread to read at a time
-  single_thread_readlock_.setup_shmem_region(shmem_comm_, 1);
+  single_thread_readlock_.setup_shmem_region(shmem_comm_, 1, false, verbose_);
 
   //finally the allocation of the buffer
   //std::cout<<"allocating large mem region of size: "<<number_of_buffered_elements_*element_size_/(1024./1024.)<<" kB"<<std::endl;
-  buffer_data_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_*element_size_);
+  buffer_data_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_*element_size_, false, verbose_);
   //std::cout<<"moving on"<<std::endl;
 
   MPI_Barrier(shmem_comm_);
