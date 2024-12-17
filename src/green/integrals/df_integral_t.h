@@ -10,13 +10,12 @@
 #include <green/utils/mpi_shared.h>
 #include <green/utils/mpi_utils.h>
 
-#include <green/mbpt/except.h>
-
-//#include "df_legacy_reader.h"
 #include "df_buffered_reader.h"
+#include "common_defs.h"
 
-namespace green::mbpt {
-  enum integral_symmetry_type_e { direct, conjugated, transposed };
+namespace green::integrals{
+
+
   /**
    * @brief Integral class to parse Density fitted 3-center integrals, handles reading given by the path argument
    */
@@ -34,17 +33,36 @@ namespace green::mbpt {
     df_integral_t(const std::string& path, int nao, int NQ, const bz_utils_t& bz_utils) :
       _base_path(path),
       _number_of_keys(bz_utils.symmetry().num_kpair_stored()),
-//      _vij_Q(path, nao, NQ), //initialize legacy reader
-      _vij_Q_buffer(path, nao, NQ, _number_of_keys), //initialize buffered reader
+      _vij_Q_buffer(path, nao, NQ, _number_of_keys, 0.5), //initialize buffered reader
         _k0(-1), _NQ(NQ), _bz_utils(bz_utils) {
     }
 
     virtual ~df_integral_t() {}
 
     void read_integrals(size_t k1, size_t k2){
-//      _vij_Q.read_integrals(momenta_to_symmred_key(k1,k2));
         ;
     }
+    template <typename type>
+    void read_entire(std::complex<type>* Vk1k2_Qij, int intranode_rank, int intranode_size) {
+      std::array<size_t, 4>  shape=_vij_Q_buffer.shape();
+      std::size_t NQ=shape[1];
+      std::size_t nao=shape[2];
+      std::size_t element_size=NQ*nao*nao;
+
+      //access every element. This will read it.
+      std::size_t this_rank_startindex=_number_of_keys/intranode_size*intranode_rank;
+      std::size_t this_rank_endindex=std::min(_number_of_keys/intranode_size*(intranode_rank+1), _number_of_keys);
+
+      std::cout<<"full integral read. rank : "<<intranode_rank<<" start: "<<this_rank_startindex<<" end: "<<this_rank_endindex<<std::endl;
+
+      for(std::size_t key=this_rank_startindex;key<this_rank_endindex;key++){
+        const std::complex<double> *buffer=_vij_Q_buffer.access_element(key);
+        std::size_t offset=element_size*key;
+        _vij_Q_buffer.release_element(key);
+        Complex_DoubleToType(buffer, Vk1k2_Qij+offset, NQ*nao*nao);
+      }
+    }
+
 
     void Complex_DoubleToType(const std::complex<double>* in, std::complex<double>* out, size_t size) {
       memcpy(out, in, size * sizeof(std::complex<double>));
@@ -107,6 +125,46 @@ namespace green::mbpt {
       return std::make_pair(sign, symmetry_type);
     }
 
+
+    /**
+     * Extract V(Q, i, j) with given (k1, k2) in precision "prec" from the entire integrals (Vk1k2_Qij)
+     * TODO: this non-chunked version should be combined with the chunked version
+     * @param Vk1k2_Qij
+     * @param V
+     * @param k1
+     * @param k2
+     */
+    template <typename prec>
+    void symmetrize(const std::complex<double>* Vk1k2_Qij, tensor<prec, 3>& V, const int k1, const int k2) {
+      int                                      key = momenta_to_symmred_key(k1, k2);
+      std::pair<int, integral_symmetry_type_e> vtype            = v_type(k1, k2);
+      size_t                                   NQ               = V.shape()[0];
+      size_t                                   nao              = V.shape()[1];
+      size_t                                   shift            = key * NQ * nao * nao;
+      size_t                                   element_counts_V = NQ * nao * nao;
+      ztensor<3>                               V_double_buffer(NQ, nao, nao);
+      memcpy(V_double_buffer.data(), Vk1k2_Qij + shift, element_counts_V * sizeof(std::complex<double>));
+      if (vtype.first < 0) {
+        for (int Q = 0; Q < NQ; ++Q) {
+          matrix(V(Q)) = matrix(V_double_buffer(Q)).transpose().conjugate().eval().cast<prec>();
+        }
+      } else {
+        for (int Q = 0; Q < NQ; ++Q) {
+          matrix(V(Q)) = matrix(V_double_buffer(Q)).cast<prec>();
+        }
+      }
+      if (vtype.second == conjugated) {  // conjugate
+        for (int Q = 0; Q < NQ; ++Q) {
+          matrix(V(Q)) = matrix(V(Q)).conjugate();
+        }
+      } else if (vtype.second == transposed) {  // transpose
+        for (int Q = 0; Q < NQ; ++Q) {
+          matrix(V(Q)) = matrix(V(Q)).transpose().eval();
+        }
+      }
+    }
+
+
     /**
      * Extract V(Q, i, j) with given (k1, k2) from chunks of integrals (_vij_Q)
      * Note that Q here denotes the auxiliary basis index, not the transfer momentum
@@ -128,16 +186,12 @@ namespace green::mbpt {
       const std::complex<double> *elem_ptr=_vij_Q_buffer.access_element(key);
       if (vtype.first < 0) {
         for (int Q = NQ_offset, Q_loc = 0; Q_loc < NQ_local; ++Q, ++Q_loc) {
-          //map_t vij_map(_vij_Q(key, Q),nao,nao);
           map_t vijb_map(elem_ptr+Q*nao*nao,nao,nao);
-          //if((vij_map-vijb_map).norm()>1.e-7) throw std::runtime_error("conj: the two readers gave different answers");
           matrix(vij_Q_k1k2(Q_loc)) = vijb_map.transpose().conjugate().cast<prec>();
         }
       } else {
         for (int Q = NQ_offset, Q_loc = 0; Q_loc < NQ_local; ++Q, ++Q_loc) {
-          //map_t vij_map(_vij_Q(key, Q),nao,nao);
           map_t vijb_map(elem_ptr+Q*nao*nao,nao,nao);
-          //if((vij_map-vijb_map).norm()>1.e-7) throw std::runtime_error("the two readers gave different answers");
           matrix(vij_Q_k1k2(Q_loc)) = vijb_map.cast<prec>();
         }
       }
@@ -153,6 +207,7 @@ namespace green::mbpt {
         }
       }
     }
+
 
     //const ztensor<4>& vij_Q() const { return _vij_Q()->object(); }
     const ztensor<3>& v0ij_Q() const { return _v0ij_Q; }
@@ -209,6 +264,6 @@ namespace green::mbpt {
     std::string               _base_path;
   };
 
-}  // namespace green::mbpt
+}  // namespace green::integrals
 
 #endif  // GF2_DFINTEGRAL_H

@@ -3,22 +3,31 @@
 #include <unistd.h>
 
 
-int buffer::n_buffer_elem_heuristics(double ratio, int element_size, int total_num_elem) {
+std::size_t buffer::n_buffer_elem_heuristics(double ratio, std::size_t element_size_in_bytes, std::size_t total_num_elem) {
     //figure out how much memory is available on the machine
-    unsigned long long pages = sysconf(_SC_PHYS_PAGES);
-    unsigned long long page_size = sysconf(_SC_PAGE_SIZE);
-    unsigned long long total_memory=pages*page_size;
-    //if(verbose_) std::cout<<"total memory size: "<<total_memory/(1024.*1024.*1024.)<<" GB"<<std::endl;
+    std::size_t pages = sysconf(_SC_PHYS_PAGES);
+    std::size_t page_size = sysconf(_SC_PAGE_SIZE);
+    std::size_t total_memory=pages*page_size;
 
     //figure out how many elements we could fit total
-    unsigned long long total_elements=total_memory/element_size;
+    std::size_t total_elements=total_memory/element_size_in_bytes;
 
     //modify by proportion of memory, round and return
-    int proposed_nelem=(int)(total_elements*ratio);
+    std::size_t proposed_nelem=(std::size_t)(total_elements*ratio);
 
 
     if(proposed_nelem >= total_num_elem) proposed_nelem=total_num_elem;
-    //if(verbose_ && (proposed_nelem <100)) std::cerr<<"WARNING: ONLY "<<proposed_nelem<<" (<100) buffer elements fit to memory."<<std::endl; 
+
+    int rank; MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if(rank==0){
+      std::cout<<"******************Integral Buffer allocation**********************"<<std::endl;
+      std::cout<<"* total memory size: "<<total_memory/(1024.*1024.*1024.)<<" GB"<<std::endl;
+      std::cout<<"* individual element size: "<<element_size_in_bytes/(1024.*1024.)<<" MB"<<std::endl;
+      std::cout<<"* proposed number of elements: "<<proposed_nelem<<" (target mem ratio: "<<ratio<<")"<<std::endl;
+      std::cout<<"* proposed memory usage: "<<proposed_nelem*element_size_in_bytes/(1024.*1024.*1024.)<<" GB"<<std::endl;
+      std::cout<<"******************************************************************"<<std::endl;
+    if(total_num_elem >= 100 && proposed_nelem <100) std::cerr<<"WARNING: ONLY "<<proposed_nelem<<" (<100) buffer elements fit to memory."<<std::endl; 
+    }
 
     return proposed_nelem;
 }
@@ -69,9 +78,9 @@ void buffer::setup_mpi_shmem(){
   single_thread_readlock_.setup_shmem_region(shmem_comm_, 1);
 
   //finally the allocation of the buffer
-  buffer_data_.resize(number_of_buffered_elements_);
-  for(int i=0;i<number_of_buffered_elements_;++i)
-    buffer_data_[i].setup_shmem_region(shmem_comm_,(unsigned long long) element_size_);
+  //std::cout<<"allocating large mem region of size: "<<number_of_buffered_elements_*element_size_/(1024./1024.)<<" kB"<<std::endl;
+  buffer_data_.setup_shmem_region(shmem_comm_, number_of_buffered_elements_*element_size_);
+  //std::cout<<"moving on"<<std::endl;
 
   MPI_Barrier(shmem_comm_);
 }
@@ -106,6 +115,7 @@ const double *buffer::access_element(int key){
       element_status_.release_exclusive_lock();
       //should sleep for 1 millisecond to wait for data to arrive
       std::this_thread::sleep_for(std::chrono::milliseconds(1)); //go to sleep for one millisecond, then check again
+      //std::cout<<"rank: "<<shmem_rank()<<" buffer access wait."<<std::endl;
       element_status_.acquire_exclusive_lock();
     }
   }
@@ -122,7 +132,7 @@ const double *buffer::access_element(int key){
 
     //release status lock, return buffer index
     element_status_.release_exclusive_lock();
-    return &(buffer_data_[buffer][0]);
+    return &(buffer_data_[buffer*element_size_]);
   }
 
   //otherwise status is unavailable and we need to read from file system.
@@ -134,6 +144,9 @@ const double *buffer::access_element(int key){
 
   //find key of oldest unused buffer 
   int buffer=aob_.oldest_entry();
+  //age out the oldest buffer and move it to the top
+  aob_.replace_oldest_entry(buffer);
+
   int old_key=buffer_key_[buffer];
   {
     //set data for old key to unavailable
@@ -142,7 +155,15 @@ const double *buffer::access_element(int key){
       element_status_[old_key]=status_elem_unavailable;
     }
     //sanity check
-    if(buffer_access_counter_[buffer]!=0) throw std::logic_error("freeing buffer still in use");
+    while(buffer_access_counter_[buffer]!=0){
+      //throw std::logic_error("freeing buffer still in use");
+      element_status_.release_exclusive_lock();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1)); //go to sleep for one millisecond, then check again
+      std::cout<<"rank: "<<shmem_rank()<<" wait for busy buffer."<<std::endl;
+      std::cout<<"WARNING: this is a sign that there are many concurrent reads competing for few buffers."<<std::endl;
+      std::cout<<"WARNING: HINT: increase number of buffered elements or reduce concurrent tasks"<<std::endl;
+      element_status_.acquire_exclusive_lock();
+    }
     
     //repurpose buffer for current key
     element_buffer_index_[key]=buffer;
@@ -151,8 +172,6 @@ const double *buffer::access_element(int key){
     buffer_access_counter_[buffer]++;
     buffer_access_counter_.release_exclusive_lock();
 
-    //age out the oldest buffer and move it to the top
-    aob_.replace_oldest_entry(buffer);
 
     buffer_key_.acquire_exclusive_lock();
     buffer_key_[buffer]=key;
@@ -163,10 +182,9 @@ const double *buffer::access_element(int key){
   element_status_.release_exclusive_lock();
 
   //go and read the data
-  double *read_buffer= &(buffer_data_[buffer][0]);
+  double *read_buffer= &(buffer_data_[buffer*element_size_]);
   if(single_thread_read_)
     single_thread_readlock_.acquire_exclusive_lock();
-  //std::cout<<"rank: "<<shmem_rank()<<" reading key: "<<key<<" into buffer: "<<buffer<<std::endl;
   reader_ptr_->read_key(key, read_buffer);
   if(single_thread_read_)
     single_thread_readlock_.release_exclusive_lock();
