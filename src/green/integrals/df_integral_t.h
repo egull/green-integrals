@@ -241,9 +241,9 @@ namespace green::integrals{
     void reset() {
       _vij_Q_buffer.reset();
     }
-    std::size_t shape() const{
+    std::size_t size() const{
       auto shape = _vij_Q_buffer.shape();
-      return shape[0]*shape[1]*shape[2]*shape[3]; //nkeys*nQ*nao*nao
+      return shape[0]*(std::size_t)shape[1]*shape[2]*shape[3]; //nkeys*nQ*nao*nao
     }
 
   private:
