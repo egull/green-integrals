@@ -31,7 +31,7 @@ namespace green::integrals {
     const std::string _chunk_basename    = "VQ";
 
   public:
-    df_buffered_reader(const std::string& path, int nao, int NQ, int number_of_keys, double buffer_mem_ratio=0.5, int verbose) :
+    df_buffered_reader(const std::string& path, int nao, int NQ, int number_of_keys, double buffer_mem_ratio=0.5, int verbose=0) :
         _base_path(path), _k0(-1), _NQ(NQ), _nao(nao),
         _number_of_keys(number_of_keys),
         _number_of_buffered_elements(buffer::n_buffer_elem_heuristics(buffer_mem_ratio, nao*nao*NQ*sizeof(std::complex<double>), number_of_keys)),
