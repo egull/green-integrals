@@ -22,7 +22,6 @@
 #ifndef INTEGRALS_COMMON_DEFS_H
 #define INTEGRALS_COMMON_DEFS_H
 
-#include <green/grids/itime_mesh_t.h>
 #include <green/ndarray/ndarray.h>
 
 #include <Eigen/Dense>
@@ -53,8 +52,6 @@ namespace green::integrals{
   using column      = Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1, Eigen::ColMajor>;
   using Mcolumn     = Eigen::Map<Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1, Eigen::ColMajor>>;
   using CMcolumn    = Eigen::Map<const Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1, Eigen::ColMajor>>;
-  // time grid type
-  using tau_mesh    = grids::itime_mesh_t;
   // Tensor types
   template <typename prec, size_t Dim>
   using tensor = green::ndarray::ndarray<prec, Dim>;

@@ -21,7 +21,7 @@ enum{
 
 class buffer{
 public:
-  buffer(std::size_t element_size_in_doubles, int number_of_keys, int number_of_buffered_elements, reader *reader_ptr, bool verbose=false, bool single_thread_read=false):
+  buffer(std::size_t element_size_in_doubles, int number_of_keys, int number_of_buffered_elements, reader *reader_ptr, int verbose=0, bool single_thread_read=false):
     element_size_(element_size_in_doubles),
     number_of_keys_(number_of_keys),
     number_of_buffered_elements_(number_of_buffered_elements),
@@ -34,7 +34,7 @@ public:
     ctr_read_delay_(0),
     ctr_buffer_eviction_(0)
   {
-    if(shmem_rank()==0){
+    if(shmem_rank()==0 && verbose_>1){
       std::cout<<"element size: "<<element_size_<<" number of keys: "<<number_of_keys_<<" number of buffered elements: "<<number_of_buffered_elements_<<std::endl;
     } 
     setup_mpi_shmem();
@@ -92,7 +92,7 @@ private:
   //amount of elements we can buffer
   const std::size_t number_of_buffered_elements_;
 
-  const bool verbose_;
+  const int verbose_;
 
   //this is where we do the accounting and locking/unlocking.
   shared_memory_region<int> element_status_;

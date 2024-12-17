@@ -13,6 +13,7 @@ public:
     int shmem_rank; MPI_Comm_rank(shmem_comm_, &shmem_rank);
  
     //create a shared memory for the ctr
+    // TODO: How to pass a verbosity argument to setup_shmem_region here?
     ctr_.setup_shmem_region(shmem_comm_, 1);
     if(shmem_rank==0) ctr_[0]=0; //initialize
     MPI_Barrier(shmem_comm_); //sync

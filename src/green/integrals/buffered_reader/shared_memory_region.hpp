@@ -6,7 +6,7 @@
 template<typename T> class shared_memory_region{
 public:
   shared_memory_region(){allocated_=false;locked_=false;}
-  void setup_shmem_region(const MPI_Comm &shmem_comm, std::size_t region_size, bool validate_shmem=false){
+  void setup_shmem_region(const MPI_Comm &shmem_comm, std::size_t region_size, bool validate_shmem=false, int verbose=0){
     if(allocated_) throw std::logic_error("shmem region can only be allocated once");
     int shmem_size, shmem_rank;
     MPI_Comm_size(shmem_comm,&shmem_size);
@@ -30,7 +30,9 @@ public:
       if(rss2!=region_size*sizeof(T)) throw std::runtime_error("shared window error: nk2 should be number of keys");
       if(soT2!=sizeof(T)) throw std::runtime_error("shared window error: soi2 should be sizeof(int)");
       double size_in_gb=region_size*sizeof(T)/1014./1024./1024.;
-      if(shmem_rank==0 && size_in_gb>1) std::cout<<"allocating: "<<size_in_gb<<" GB"<<std::endl;
+      if(shmem_rank==0 && size_in_gb>1 && verbose>1) {
+        std::cout << "allocating " << size_in_gb << " GB for integrals" << std::endl;
+      }
     }
     region_size_=region_size;
     allocated_=true;

@@ -28,4 +28,3 @@ target_link_libraries(integrals_test
 include(CTest)
 include(Catch)
 catch_discover_tests(integrals_test)
-

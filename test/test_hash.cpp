@@ -17,7 +17,7 @@ TEST_CASE("HashOfKeys","[ReadingSI]") {
 
 
   chunk_reader c(TEST_PATH, number_of_keys, naux, nao); //test these numbers
-  buffer b(c.element_size(), number_of_keys, 100, &c, false, false);
+  buffer b(c.element_size(), number_of_keys, 100, &c, 0, false);
   if(b.shmem_rank()==0){
   for(int i=0;i<5;++i){
     const double* val=b.access_element(i);

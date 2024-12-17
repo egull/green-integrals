@@ -30,10 +30,10 @@ namespace green::integrals{
     using int_data                       = utils::shared_object<ztensor<4>>;
 
   public:
-    df_integral_t(const std::string& path, int nao, int NQ, const bz_utils_t& bz_utils) :
+    df_integral_t(const std::string& path, int nao, int NQ, const bz_utils_t& bz_utils, int verbose) :
       _base_path(path),
       _number_of_keys(bz_utils.symmetry().num_kpair_stored()),
-      _vij_Q_buffer(path, nao, NQ, _number_of_keys, 0.5), //initialize buffered reader
+      _vij_Q_buffer(path, nao, NQ, _number_of_keys, 0.5, verbose), //initialize buffered reader
         _k0(-1), _NQ(NQ), _bz_utils(bz_utils) {
     }
 
@@ -249,7 +249,7 @@ namespace green::integrals{
   private:
     int                       _number_of_keys;
     //df_legacy_reader _vij_Q;
-    df_buffered_reader _vij_Q_buffer;
+    df_buffered_reader        _vij_Q_buffer;
     // G=0 correction to coulomb integral stored in density fitting format for second-order e3xchange diagram
     ztensor<3>                _v0ij_Q;
     ztensor<3>                _v_bar_ij_Q;
