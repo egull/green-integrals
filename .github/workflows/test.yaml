@@ -31,6 +31,7 @@ jobs:
         run: |
             module load BuildEnv/gcc-12.2.0.lua;
             cd build;
+            export CTEST_OUTPUT_ON_FAILURE=1
             ctest -j 1
 
       - name: Run coverage
