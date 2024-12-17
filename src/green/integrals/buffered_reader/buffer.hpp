@@ -82,9 +82,6 @@ private:
   void setup_mpi_shmem();
   void release_mpi_shmem();
 
-   //returns the key and buffer of the oldest buffer that is unused.
-//  std::pair<int, int> find_oldest_unused_buffer_key() const;
-
   //amount of memory each element uses (in units of doubles)
   const std::size_t element_size_;
   //amount of total elements we have
