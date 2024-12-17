@@ -58,11 +58,6 @@ namespace green::integrals {
 
     virtual ~df_buffered_reader() {}
 
-    void read_integrals(size_t idx_red) {
-      //noop. This would only be needed for the legacy reader
-      ;
-    }
-
     void reset() {
       //nothing to reset
       ;
