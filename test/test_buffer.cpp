@@ -32,10 +32,6 @@ TEST_CASE("NelemHeuristics","[buffer]") {
   int half=buffer::n_buffer_elem_heuristics(0.5, element_size, nKQ);
   int quarter=buffer::n_buffer_elem_heuristics(0.25, element_size, nKQ);
 
-  std::cout << "GH says: all = " << all << std::endl;
-  std::cout << "GH says: half = " << half << std::endl;
-  std::cout << "GH says: quarter = " << quarter << std::endl;
-
   REQUIRE_THAT(all, Catch::Matchers::WithinAbs(2.*half, 10.));
   REQUIRE_THAT(all, Catch::Matchers::WithinAbs(4.*quarter, 10.));
 

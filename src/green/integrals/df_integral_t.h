@@ -125,8 +125,6 @@ namespace green::integrals{
 
     /**
      * Extract V(Q, i, j) with given (k1, k2) in precision "prec" from the entire integrals (Vk1k2_Qij)
-     * TODO: this non-chunked version should be combined with the chunked version
-     * ? GH: This task appears to be accomplished. Or does the TODO refer to something else?
      * @param Vk1k2_Qij
      * @param V
      * @param k1

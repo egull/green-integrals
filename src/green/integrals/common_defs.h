@@ -28,8 +28,6 @@
 
 #include "common_defs_e.h"
 
-// TODO: Plenty of defs here are literally unused. Might as well prune those out
-
 namespace green::integrals{
 
   // Matrix types
