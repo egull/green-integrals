@@ -31,7 +31,7 @@ namespace green::integrals {
     const std::string _chunk_basename    = "VQ";
 
   public:
-    df_buffered_reader(const std::string& path, int nao, int NQ, int number_of_keys, double buffer_mem_ratio=0.5, int verbose) :
+    df_buffered_reader(const std::string& path, int nao, int NQ, int number_of_keys, double buffer_mem_ratio=0.5, int verbose=0) :
         _base_path(path), _k0(-1), _NQ(NQ), _nao(nao),
         _number_of_keys(number_of_keys),
         _number_of_buffered_elements(buffer::n_buffer_elem_heuristics(buffer_mem_ratio, nao*nao*NQ*sizeof(std::complex<double>), number_of_keys)),
@@ -41,14 +41,10 @@ namespace green::integrals {
       if(ar.has_attribute("__green_version__")) {
         std::string int_version = ar.get_attribute<std::string>("__green_version__");
         if (int_version.rfind(INPUT_VERSION, 0) != 0) {
-          //throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
-          std::cerr<<"Integral files at '" + path +"' are outdated, please run migration script python/migrate.py"<<std::endl;
-          std::cerr<<"we should really throw but we won't until the debug files have been updated."<<std::endl;
+          throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
         }
       } else {
-        //throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
-          std::cerr<<"Integral files at '" + path +"' are outdated, please run migration script python/migrate.py"<<std::endl;
-          std::cerr<<"we should really throw but we won't until the debug files have been updated."<<std::endl;
+        throw integrals_outdated_input("Integral files at '" + path +"' are outdated, please run migration script python/migrate.py");
       }
       ar.close();
 
